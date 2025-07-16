@@ -1,0 +1,267 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["relationJoins"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider     = "sqlite"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Student {
+  id               String       @id @default(uuid())
+  fullName         String
+  dateOfBirth      DateTime?
+  email            String?      @unique
+  phone            String?      @unique
+  studentNumber    String       @unique
+  gradeLevel       GradeLevel   @relation(fields: [gradeLevelId], references: [id])
+  gradeLevelId     String
+  isOnline         Boolean      @default(false)
+  isStillAttending Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  notes            Json?
+  sensitiveNotes   String?
+  isArchived       Boolean      @default(false)
+  archivedAt       DateTime?
+  parent           Parent?      @relation(fields: [parentId], references: [id])
+  parentId         String?
+  paymentPlan      PaymentPlan? @relation(fields: [paymentPlanId], references: [id])
+  paymentPlanId    String?
+
+  exams        ExamAttempt[]
+  homework     Homework[]
+  behaviors    Behavior[]
+  achievements Achievement[]
+  payments     Payment[]
+
+  Attendance Attendance[]
+
+  @@index([isStillAttending])
+  @@index([createdAt])
+  @@index([parentId])
+  @@index([paymentPlanId])
+  @@index([gradeLevelId])
+  @@index([isArchived])
+  @@index([fullName], map: "search_fullName")
+  @@index([studentNumber], map: "search_studentNumber")
+  @@index([fullName, studentNumber], map: "compound_search_idx")
+}
+
+model Parent {
+  id             String    @id @default(uuid())
+  name           String
+  primaryPhone   String
+  secondaryPhone String?
+  address        String?
+  students       Student[]
+
+  @@index([primaryPhone])
+}
+
+model GradeLevel {
+  id                String             @id @default(uuid())
+  name              String             @unique
+  order             Int                @unique
+  isActive          Boolean            @default(true)
+  students          Student[]
+  exams             Exam[]
+  homeworkTemplates HomeworkTemplate[]
+  Attendance        Attendance[]
+
+  @@index([order, isActive])
+  @@index([name])
+}
+
+model Attendance {
+  id           String     @id @default(cuid())
+  student      Student    @relation(fields: [studentId], references: [id])
+  studentId    String
+  date         DateTime
+  gradeLevel   GradeLevel @relation(fields: [gradeLevelId], references: [id])
+  gradeLevelId String
+
+  @@unique([studentId, date])
+  @@index([gradeLevelId])
+}
+
+model Exam {
+  id           String        @id @default(uuid())
+  title        String
+  startsAt     DateTime
+  endsAt       DateTime
+  fullGrade    Float
+  gradeLevel   GradeLevel    @relation(fields: [gradeLevelId], references: [id])
+  gradeLevelId String
+  attempts     ExamAttempt[]
+
+  @@index([gradeLevelId])
+  @@index([startsAt])
+}
+
+// Integerate when you make online exams
+model ExamAttempt {
+  id           String    @id @default(uuid())
+  studentGrade Float?
+  submittedAt  DateTime?
+  student      Student   @relation(fields: [studentId], references: [id])
+  studentId    String
+  exam         Exam      @relation(fields: [examId], references: [id])
+  examId       String
+
+  @@unique([studentId, examId])
+  @@index([studentId])
+  @@index([examId])
+  @@index([submittedAt])
+}
+
+model HomeworkTemplate {
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  dueDate      DateTime
+  gradeLevel   GradeLevel @relation(fields: [gradeLevelId], references: [id])
+  gradeLevelId String
+  assignments  Homework[]
+
+  @@index([gradeLevelId])
+  @@index([dueDate, gradeLevelId])
+}
+
+model Homework {
+  id           String           @id @default(uuid())
+  isDone       Boolean          @default(false)
+  studentGrade Float?
+  isLate       Boolean          @default(false)
+  submittedAt  DateTime?
+  student      Student          @relation(fields: [studentId], references: [id])
+  studentId    String
+  template     HomeworkTemplate @relation(fields: [templateId], references: [id])
+  templateId   String
+
+  @@index([studentId])
+  @@index([templateId])
+  @@index([isDone, isLate])
+}
+
+model Behavior {
+  id        String   @id @default(uuid())
+  type      String
+  score     Int?
+  notes     String?
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id])
+  studentId String
+
+  @@index([studentId])
+  @@index([type, createdAt])
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  title       String
+  awardedAt   DateTime @default(now())
+  description String?
+  student     Student  @relation(fields: [studentId], references: [id])
+  studentId   String
+
+  @@index([awardedAt])
+  @@index([studentId])
+}
+
+enum PaymentFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  CREDIT_CARD
+  E_WALLET
+  OTHER
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments        Payment[]
+  FinancialRecord FinancialRecord[]
+  PaymentPlan     PaymentPlan[]
+}
+
+model Payment {
+  id            String            @id @default(uuid())
+  amount        Float
+  type          TransactionType   @default(INCOME)
+  records       FinancialRecord[]
+  paymentMethod PaymentMethod     @default(CASH)
+  paymentDate   DateTime          @default(now())
+  description   String?
+  student       Student?          @relation(fields: [studentId], references: [id])
+  studentId     String?
+  plan          PaymentPlan?      @relation(fields: [planId], references: [id])
+  planId        String?
+  category      Category?         @relation(fields: [categoryId], references: [id])
+  categoryId    String?
+  isDeleted     Boolean           @default(false)
+
+  @@index([planId])
+  @@index([paymentDate])
+  @@index([studentId, paymentDate])
+  @@index([categoryId])
+}
+
+model FinancialRecord {
+  id          String          @id @default(uuid())
+  amount      Float
+  type        TransactionType @default(INCOME)
+  category    Category        @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  isDeleted   Boolean         @default(false)
+  description String?
+  date        DateTime        @default(now())
+  taxAmount   Float?
+  payment     Payment         @relation(fields: [paymentId], references: [id]) // Required relation
+  paymentId   String
+
+  @@index([date, type])
+  @@index([categoryId])
+  @@index([paymentId])
+}
+
+model PaymentPlan {
+  id          String           @id @default(uuid())
+  name        String           @unique()
+  type        PaymentFrequency @default(MONTHLY)
+  amount      Float
+  isActive    Boolean          @default(true)
+  category    Category         @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  // daysUntilDue   Int              @default(7)
+  // overduePenalty Float?           @default(0)
+  students    Student[]
+  payments    Payment[]
+  isRecurring Boolean          @default(false)
+
+  // installments   Json?
+
+  @@index([isActive])
+  @@index([categoryId])
+}

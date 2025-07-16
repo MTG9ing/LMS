@@ -1,0 +1,5 @@
+/node_modules
+/logs
+/coverage
+/.vscode
+jest.config.js

@@ -1,0 +1,84 @@
+### POST
+POST http://localhost:9000/api/students HTTP/1.1
+Content-Type: application/json
+
+{
+  "fullName": "مروان السيد",
+  "dateOfBirth": "2001-10-10",
+  "email": "marwan@yahoo.com",
+  "phone": "+201552711001",
+  "gradeLevelId": "ee56efab-3444-424b-a7ed-65cc19a1e34e",
+  "parentId": "84ec24e5-7274-447b-bc31-edce6219d2fa",
+  "isOnline": true,
+  "isStillAttending": true,
+  "sensitiveNotes": "لا يركز اكثر من نصف ساعة",
+  "paymentPlanId": "34a9d918-f6ec-4dbc-a9d0-0e5f0de2ef42"
+}
+
+### GET
+GET http://localhost:9000/api/students?sort=desc&order=createdAt  HTTP/1.1
+
+### GET
+GET http://localhost:9000/api/students/3800befd-0dbc-43f-bc4e-1c3d6d35effa  HTTP/1.1
+
+
+### POST 
+POST http://localhost:9000/api/payments HTTP/1.1
+Content-Type: application/json
+
+{
+  "planId": "70b498d9-0a97-4163-9b2b-6ef1aecb32e7",
+  "studentId": "9da3b82e-5be1-4fe7-bceb-4af7b7d7f84a",
+  "paymentMetohd": "CASH",
+  "type": "INCOME",
+  "description": ""
+
+}
+
+### DELETE
+DELETE http://localhost:9000/api/payments/b3bbc7c0-499e-4a93-8ec5-818237812dbb HTTP/1.1
+
+### POST 
+POST http://localhost:9000/api/categories HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "a"
+}
+
+### POST
+POST http://localhost:9000/api/financial-records HTTP/1.1
+Content-Type: application/json
+
+{
+  "paymentId": "ac0d7349-c9a8-49e6-a36d-2ab84b175056"
+}
+
+### GET
+GET http://localhost:9000/api/payment-plans?isActive HTTP/1.1
+
+
+### POST
+POST http://localhost:9000/api/payment-plans HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Month Sub",
+  "type": "MONTHLY",
+  "amount": 240,
+  "categoryId": "ef6b6b2c-6a55-4945-8bd7-cc7fe453f540"
+}
+
+
+### POST
+POST http://localhost:9000/api/attendance HTTP/1.1
+Content-Type: application/json
+
+{
+  "gradeLevelId": "ee56efab-3444-424b-a7ed-65cc19a1e34e",
+  "date": "2025-05-11",
+    "studentId": "9944be0b-861c-433f-9ffc-ab0394c9e8f9"
+}
+
+### GET 
+GET http://localhost:9000/api/attendance/2025-05-11/ee56efab-3444-424b-a7ed-65cc19a1e34e HTTP/1.1
